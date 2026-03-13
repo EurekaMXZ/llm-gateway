@@ -1,0 +1,112 @@
+openapi: 3.1.0
+info:
+  title: execution-service API
+  version: v0
+  description: M2 provider and model catalog management API.
+servers:
+  - url: http://localhost:18083
+paths:
+  /v1/providers:
+    post:
+      summary: Create upstream provider configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [actor_id, owner_id, name, protocol, base_url, api_key]
+              properties:
+                actor_id: { type: string }
+                actor_is_superuser: { type: boolean }
+                actor_can_write: { type: boolean, description: "Set true when caller is authorized to manage owner subtree resources." }
+                owner_id: { type: string }
+                name: { type: string }
+                protocol:
+                  type: string
+                  enum: [openai-compatible]
+                base_url: { type: string }
+                api_key: { type: string }
+      responses:
+        '201':
+          description: Provider created
+    get:
+      summary: List providers (optional owner filter)
+      parameters:
+        - in: query
+          name: owner_id
+          schema: { type: string }
+      responses:
+        '200':
+          description: Provider list
+  /v1/providers/{id}:
+    get:
+      summary: Get provider by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Provider detail
+        '404':
+          description: Provider not found
+  /v1/providers/{id}/enable:
+    post:
+      summary: Enable provider
+  /v1/providers/{id}/disable:
+    post:
+      summary: Disable provider
+  /v1/models:
+    post:
+      summary: Create model catalog entry under provider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [actor_id, owner_id, provider_id, name, upstream_model]
+              properties:
+                actor_id: { type: string }
+                actor_is_superuser: { type: boolean }
+                actor_can_write: { type: boolean, description: "Set true when caller is authorized to manage owner subtree resources." }
+                owner_id: { type: string }
+                provider_id: { type: string }
+                name: { type: string }
+                upstream_model: { type: string }
+      responses:
+        '201':
+          description: Model created
+    get:
+      summary: List models (optional provider/owner filters)
+      parameters:
+        - in: query
+          name: provider_id
+          schema: { type: string }
+        - in: query
+          name: owner_id
+          schema: { type: string }
+      responses:
+        '200':
+          description: Model list
+  /v1/models/{id}:
+    get:
+      summary: Get model by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Model detail
+        '404':
+          description: Model not found
+  /v1/models/{id}/enable:
+    post:
+      summary: Enable model
+  /v1/models/{id}/disable:
+    post:
+      summary: Disable model

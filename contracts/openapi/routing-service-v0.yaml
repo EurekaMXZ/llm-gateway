@@ -1,0 +1,80 @@
+openapi: 3.1.0
+info:
+  title: routing-service API
+  version: v0
+  description: M2 custom-model routing policy management API.
+servers:
+  - url: http://localhost:18084
+paths:
+  /v1/policies:
+    post:
+      summary: Create routing policy for a custom model
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [actor_id, owner_id, custom_model, target_provider_id, target_model, priority]
+              properties:
+                actor_id: { type: string }
+                actor_is_superuser: { type: boolean }
+                actor_can_write: { type: boolean, description: "Set true when caller is authorized to manage owner subtree resources." }
+                owner_id: { type: string }
+                custom_model: { type: string }
+                target_provider_id: { type: string }
+                target_model: { type: string }
+                priority: { type: integer, minimum: 0 }
+                condition_json: { type: string }
+      responses:
+        '201':
+          description: Policy created
+    get:
+      summary: List policies
+      parameters:
+        - in: query
+          name: owner_id
+          schema: { type: string }
+        - in: query
+          name: custom_model
+          schema: { type: string }
+      responses:
+        '200':
+          description: Policy list
+  /v1/policies/{id}:
+    get:
+      summary: Get policy by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Policy detail
+        '404':
+          description: Policy not found
+  /v1/policies/{id}/enable:
+    post:
+      summary: Enable policy
+  /v1/policies/{id}/disable:
+    post:
+      summary: Disable policy
+  /v1/policies/resolve:
+    post:
+      summary: Resolve custom model to target provider/model decision
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [owner_id, custom_model]
+              properties:
+                owner_id: { type: string }
+                custom_model: { type: string }
+      responses:
+        '200':
+          description: Matched policy
+        '404':
+          description: No policy matched

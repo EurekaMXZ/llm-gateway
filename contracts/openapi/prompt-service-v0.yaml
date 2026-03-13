@@ -1,0 +1,89 @@
+openapi: 3.1.0
+info:
+  title: prompt-service API
+  version: v0
+  description: M2 scene template management and rendering API.
+servers:
+  - url: http://localhost:18085
+paths:
+  /v1/templates:
+    post:
+      summary: Create scene template with variable definitions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [actor_id, owner_id, scene, content]
+              properties:
+                actor_id: { type: string }
+                actor_is_superuser: { type: boolean }
+                actor_can_write: { type: boolean, description: "Set true when caller is authorized to manage owner subtree resources." }
+                owner_id: { type: string }
+                scene: { type: string }
+                content: { type: string }
+                variables:
+                  type: array
+                  items:
+                    type: object
+                    required: [name, type]
+                    properties:
+                      name: { type: string }
+                      type:
+                        type: string
+                        enum: [string, number, boolean]
+                      required: { type: boolean }
+                      default_value: { type: string }
+      responses:
+        '201':
+          description: Template created
+    get:
+      summary: List templates
+      parameters:
+        - in: query
+          name: owner_id
+          schema: { type: string }
+      responses:
+        '200':
+          description: Template list
+  /v1/templates/{id}:
+    get:
+      summary: Get template by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Template detail
+        '404':
+          description: Template not found
+  /v1/templates/{id}/enable:
+    post:
+      summary: Enable template
+  /v1/templates/{id}/disable:
+    post:
+      summary: Disable template
+  /v1/render:
+    post:
+      summary: Render scene template to prompt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [owner_id, scene]
+              properties:
+                owner_id: { type: string }
+                scene: { type: string }
+                variables:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Rendered prompt
+        '422':
+          description: Structured render validation issues

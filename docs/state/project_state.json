@@ -1,6 +1,6 @@
 {
   "project_version": "0.1.0",
-  "current_milestone": "M2",
+  "current_milestone": "M3",
   "services": [
     "ingress-service",
     "identity-service",
@@ -23,13 +23,13 @@
   "open_risks": [
     "No production auth/session strategy finalized",
     "No upstream retry/circuit-breaker policy finalized",
-    "M2 role hierarchy edge cases and subtree scope semantics not fully specified in executable tests"
+    "Ingress control-plane validation is available only on /v1/control/validate and not yet wired into OpenAI data-plane endpoints"
   ],
   "next_actions": [
-    "Create identity-service API skeletons for authentication and permission validation",
-    "Create apikey-service API skeletons for key lifecycle and model whitelist query",
-    "Define M2 permission/isolation test matrix and add baseline integration tests"
+    "Build M3 ingress orchestration pipeline skeleton (Auth->Whitelist->Template->Routing->Execution->Response)",
+    "Implement OpenAI-compatible upstream adapter invocation in execution path",
+    "Add E2E tests for explicit concrete model bypass vs custom-model policy routing"
   ],
   "last_verified_commit": "UNCOMMITTED",
-  "updated_at": "2026-03-13T14:29:58Z"
+  "updated_at": "2026-03-13T16:11:08Z"
 }

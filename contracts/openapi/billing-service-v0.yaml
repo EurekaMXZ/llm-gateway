@@ -1,0 +1,84 @@
+openapi: 3.1.0
+info:
+  title: billing-service API
+  version: v0
+  description: M2 pricing and wallet management API.
+servers:
+  - url: http://localhost:18086
+paths:
+  /v1/prices:
+    post:
+      summary: Create or update price configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [actor_id, owner_id, provider_id, model, input_price_per_1k, output_price_per_1k, currency]
+              properties:
+                actor_id: { type: string }
+                actor_is_superuser: { type: boolean }
+                actor_can_write: { type: boolean, description: "Set true when caller is authorized to manage owner subtree resources." }
+                owner_id: { type: string }
+                provider_id: { type: string }
+                model: { type: string }
+                input_price_per_1k: { type: number }
+                output_price_per_1k: { type: number }
+                currency: { type: string }
+      responses:
+        '200':
+          description: Price upserted
+    get:
+      summary: List prices
+      parameters:
+        - in: query
+          name: owner_id
+          schema: { type: string }
+      responses:
+        '200':
+          description: Price list
+  /v1/prices/{id}:
+    get:
+      summary: Get price by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Price detail
+        '404':
+          description: Price not found
+  /v1/wallets/{owner_id}:
+    get:
+      summary: Get wallet balance
+      parameters:
+        - in: path
+          name: owner_id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Wallet detail
+  /v1/wallets/{owner_id}/topup:
+    post:
+      summary: Top up wallet
+  /v1/wallets/{owner_id}/deduct:
+    post:
+      summary: Deduct wallet
+  /v1/wallets/{owner_id}/transactions:
+    get:
+      summary: List wallet transactions
+      parameters:
+        - in: path
+          name: owner_id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Transaction list

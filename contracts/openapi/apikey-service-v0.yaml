@@ -1,0 +1,83 @@
+openapi: 3.1.0
+info:
+  title: apikey-service API
+  version: v0
+  description: M2 skeleton API for key lifecycle and model whitelist validation.
+servers:
+  - url: http://localhost:18082
+paths:
+  /v1/keys:
+    post:
+      summary: Create API key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [owner_id, name]
+              properties:
+                owner_id: { type: string }
+                name: { type: string }
+                allowed_models:
+                  type: array
+                  items: { type: string }
+                expires_at:
+                  type: string
+                  format: date-time
+      responses:
+        '201':
+          description: Created with plaintext key in response
+  /v1/keys/{id}:
+    get:
+      summary: Get key metadata
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Key metadata
+        '404':
+          description: Not found
+  /v1/keys/{id}/disable:
+    post:
+      summary: Disable key
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Disabled
+  /v1/keys/{id}/enable:
+    post:
+      summary: Enable key
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Enabled
+  /v1/keys/validate:
+    post:
+      summary: Validate key and model whitelist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [api_key]
+              properties:
+                api_key: { type: string }
+                model:
+                  type: string
+                  description: Required when the API key has `allowed_models` configured.
+      responses:
+        '200':
+          description: Validation decision

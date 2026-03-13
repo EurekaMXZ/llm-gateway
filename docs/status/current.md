@@ -1,10 +1,10 @@
 # Current Status
 
 ## Date
-- 2026-03-13
+- 2026-03-14
 
 ## Active Milestone
-- M2: Identity and resource control plane (M1 completed)
+- M3: Data plane main flow (M2 closeout completed on 2026-03-13)
 
 ## Completed
 - Rewrote `AGENTS.md` with executable architecture and process constraints.
@@ -25,14 +25,30 @@
 - Published service-level configuration contract in `contracts/config/service-config-contract.md`.
 - Fixed review issue: `make test-go` now fails fast on first module test failure.
 - Fixed review issue: Kafka now uses dual advertised listeners to support both Compose-internal and host-side clients.
+- Implemented M2 identity-service APIs (`bootstrap superuser`, `token`, `token validate`, `permission check`, `create user`) with JWT and hierarchy checks.
+- Implemented M2 apikey-service APIs (`create/get/enable/disable/validate`) with lifecycle and model whitelist validation.
+- Implemented M2 execution-service provider/model catalog management APIs (owner constraints + Postgres persistence + tests).
+- Implemented M2 routing-service policy management and resolve APIs (owner constraints + Postgres persistence + tests).
+- Implemented M2 prompt-service template/variable management and render validation APIs (422 structured issues + Postgres persistence + tests).
+- Implemented M2 billing-service pricing/wallet/transaction APIs (owner constraints + balance checks + Postgres persistence + tests).
+- Completed M2 persistence wiring for identity/apikey/execution/routing/prompt/billing with startup schema ensure and readiness DB checks.
+- Completed ingress control-plane integration: `/v1/control/validate` calling identity + apikey validation and checking key-owner consistency.
+- Added OpenAPI contracts for `identity/apikey/execution/routing/prompt/billing`.
+- Added executable M2 closeout smoke script `scripts/agent/m2_closeout_smoke.sh` and Makefile target `m2-smoke`.
+- Verified compose-level M2 closeout smoke (`make m2-smoke`) PASS against running stack.
+- Fixed review P1: `/v1/users` now requires bearer token auth and enforces caller-based create-user permission scope.
+- Fixed review P1: management write checks in execution/routing/prompt/billing now accept explicit subtree write authorization (`actor_can_write`) instead of superuser/self only.
+- Fixed review P2: apikey validation now rejects model-scoped keys when request model is empty (`reason=model_required`).
+- Fixed review P2: superuser uniqueness now enforced atomically through repository constraints (`uq_users_single_superuser`) plus in-memory lock-time guard.
+- Revalidated affected services and root Go test aggregation after fixes (`make test-go` PASS).
 
 ## In Progress
-- M2 bootstrap: control-plane API skeletons for identity and API key management.
+- M3 planning and ingress main data-plane orchestration bootstrap.
 
 ## Blockers
 - None
 
 ## Next Actions
-1. Create identity-service API skeletons for auth, role checks, and subtree access validation.
-2. Create apikey-service API skeletons for key lifecycle and model whitelist queries.
-3. Define M2 permission test matrix and add initial integration tests.
+1. Build M3 ingress orchestration pipeline skeleton (`Auth -> Whitelist -> Template -> Routing -> Execution -> Response`).
+2. Define/implement upstream execution adapter invocation path for OpenAI-compatible flows.
+3. Add end-to-end test path for explicit concrete model bypass vs custom-model policy routing behavior.
