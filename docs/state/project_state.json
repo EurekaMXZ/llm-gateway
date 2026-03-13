@@ -1,0 +1,34 @@
+{
+  "project_version": "0.1.0",
+  "current_milestone": "M1",
+  "services": [
+    "ingress-service",
+    "identity-service",
+    "apikey-service",
+    "execution-service",
+    "routing-service",
+    "prompt-service",
+    "billing-service",
+    "audit-service"
+  ],
+  "api_contract_versions": {
+    "openapi": "v0",
+    "downstream": "openai-compatible-v1"
+  },
+  "event_contract_versions": {
+    "execution.invocation.completed": "v1",
+    "audit.operation.recorded": "v1",
+    "billing.usage.recorded": "v1"
+  },
+  "open_risks": [
+    "No production auth/session strategy finalized",
+    "No upstream retry/circuit-breaker policy finalized"
+  ],
+  "next_actions": [
+    "Bootstrap all backend service modules",
+    "Bootstrap frontend admin app",
+    "Create local compose baseline"
+  ],
+  "last_verified_commit": "UNCOMMITTED",
+  "updated_at": "2026-03-13T00:00:00Z"
+}

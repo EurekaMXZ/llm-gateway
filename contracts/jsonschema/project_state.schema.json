@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-gateway.local/schemas/project_state.schema.json",
+  "type": "object",
+  "required": [
+    "project_version",
+    "current_milestone",
+    "services",
+    "api_contract_versions",
+    "event_contract_versions",
+    "open_risks",
+    "next_actions",
+    "last_verified_commit",
+    "updated_at"
+  ],
+  "properties": {
+    "project_version": { "type": "string" },
+    "current_milestone": { "type": "string" },
+    "services": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "api_contract_versions": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "event_contract_versions": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "open_risks": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "next_actions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "last_verified_commit": { "type": "string" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  }
+}
