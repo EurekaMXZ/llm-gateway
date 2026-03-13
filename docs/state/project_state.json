@@ -1,6 +1,6 @@
 {
   "project_version": "0.1.0",
-  "current_milestone": "M1",
+  "current_milestone": "M2",
   "services": [
     "ingress-service",
     "identity-service",
@@ -22,13 +22,14 @@
   },
   "open_risks": [
     "No production auth/session strategy finalized",
-    "No upstream retry/circuit-breaker policy finalized"
+    "No upstream retry/circuit-breaker policy finalized",
+    "M2 role hierarchy edge cases and subtree scope semantics not fully specified in executable tests"
   ],
   "next_actions": [
-    "Bootstrap all backend service modules",
-    "Bootstrap frontend admin app",
-    "Create local compose baseline"
+    "Create identity-service API skeletons for authentication and permission validation",
+    "Create apikey-service API skeletons for key lifecycle and model whitelist query",
+    "Define M2 permission/isolation test matrix and add baseline integration tests"
   ],
   "last_verified_commit": "UNCOMMITTED",
-  "updated_at": "2026-03-13T00:00:00Z"
+  "updated_at": "2026-03-13T14:29:58Z"
 }
