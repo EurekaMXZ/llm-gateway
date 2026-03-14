@@ -16,6 +16,7 @@ type Provider struct {
 	Protocol  string
 	BaseURL   string
 	APIKey    string
+	Priority  int
 	Status    ProviderStatus
 	CreatedAt time.Time
 	UpdatedAt time.Time

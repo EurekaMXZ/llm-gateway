@@ -57,9 +57,9 @@ Any item marked with `MUST` is a mandatory rule.
 
 #### routing-service
 
-- Owns custom model definitions and policy engine rules.
-- Triggered only when downstream model is a custom model alias.
-- Concrete model requests MUST bypass routing rules.
+- Owns downstream-model routing policy engine rules.
+- Evaluates routing policies for any downstream model name.
+- Only matched policies rewrite target provider/model; when no policy matches, request MUST fall back to direct upstream model execution.
 
 #### prompt-service
 
@@ -80,7 +80,7 @@ Any item marked with `MUST` is a mandatory rule.
 ### 3.2 Cross-Service Invariants (MUST)
 
 - Billing basis MUST always be actual upstream `provider/model/token`, never downstream alias.
-- Routing rules MUST apply only to custom models.
+- Routing policy evaluation MUST support any downstream model name; no policy match MUST fall back to direct upstream execution.
 - Prompt injection MUST be controlled by downstream `scene + variables`.
 - End-to-end `trace_id` MUST propagate across sync APIs and async events.
 
@@ -232,6 +232,12 @@ Delivery semantics:
 - It is strictly forbidden to configure project-local cache directories for tooling caches such as `pnpm-store`, `GOCACHE`, `GOMODCACHE`, `GOPATH/pkg/mod`, `npm` cache, or similar runtime/build caches for the purpose of bypassing permission constraints.
 - If escalation is used, the session notes SHOULD briefly record which command required escalation and why.
 
+### 7.6 Documentation and Script Consistency (MUST)
+
+- `AGENTS.md`, `docs/runbooks/*.md`, and `scripts/agent/*.sh` MUST describe the same operational policy for session lifecycle, sandbox escalation, and cache-path restrictions.
+- If any rule changes in one of the above locations, the corresponding documents/scripts MUST be updated in the same change.
+- Helper scripts MUST remain executable and reflect current mandatory fields/steps from this specification.
+
 ## 8. Session Memory and State Synchronization (MANDATORY)
 
 ### 8.1 Session Start Procedure (MUST)
@@ -377,11 +383,11 @@ Verification:
 Deliverables:
 
 - End-to-end ingress pipeline: auth -> whitelist -> template -> routing -> execution -> response.
-- Bypass rule for concrete model requests.
+- Routing semantics: matched policy rewrites target provider/model; no policy match performs direct upstream execution for requested model.
 
 Verification:
 
-- Integration tests cover custom-model routed and concrete-model bypass paths.
+- Integration tests cover policy-matched rewrite path and no-policy direct-execution path.
 
 ### M4 Event-Driven Audit and Billing Loop
 

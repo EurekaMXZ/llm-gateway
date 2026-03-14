@@ -12,7 +12,8 @@ printf "3. Update docs/state/project_state.json\n"
 printf "4. Record ADR if architecture changed\n"
 printf "5. Verify last_verified_commit and updated_at fields\n"
 printf "6. Note escalation usage if sandbox permission was required\n"
-printf "7. Run M2 smoke script when applicable: make m2-smoke\n"
+printf "7. Sync AGENTS.md, docs/runbooks/*.md, and scripts/agent/*.sh for policy changes\n"
+printf "8. Run M2 smoke script when applicable: make m2-smoke\n"
 
 if [[ ! -f "$HISTORY_FILE" ]]; then
   printf "Creating history file for %s\n" "$TODAY"

@@ -34,7 +34,8 @@
 2. Memory/state files synchronized.
 3. New assumptions/trade-offs recorded in ADR or status notes.
 4. `last_verified_commit` reflects verified commit SHA or `UNCOMMITTED`.
-5. If current milestone is M2, run `make m2-smoke` (or document why skipped).
+5. `AGENTS.md`, `docs/runbooks/*.md`, and `scripts/agent/*.sh` are synchronized for any changed policy.
+6. If current milestone is M2, run `make m2-smoke` (or document why skipped).
 
 ## Sandbox and Cache Policy Reminder
 

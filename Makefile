@@ -1,4 +1,4 @@
-.PHONY: compose-up compose-down compose-logs compose-ps check-state test-go m2-smoke
+.PHONY: compose-up compose-down compose-logs compose-ps check-state test-go m2-smoke m3-smoke
 
 compose-up:
 	docker compose up -d --build
@@ -24,3 +24,6 @@ test-go:
 
 m2-smoke:
 	scripts/agent/m2_closeout_smoke.sh
+
+m3-smoke:
+	scripts/agent/m3_closeout_smoke.sh

@@ -1,6 +1,6 @@
 {
   "project_version": "0.1.0",
-  "current_milestone": "M3",
+  "current_milestone": "M4",
   "services": [
     "ingress-service",
     "identity-service",
@@ -23,13 +23,13 @@
   "open_risks": [
     "No production auth/session strategy finalized",
     "No upstream retry/circuit-breaker policy finalized",
-    "Ingress control-plane validation is available only on /v1/control/validate and not yet wired into OpenAI data-plane endpoints"
+    "Ingress /v1/responses is currently implemented through chat-pipeline adaptation and does not yet provide full Responses API parity for all advanced fields"
   ],
   "next_actions": [
-    "Build M3 ingress orchestration pipeline skeleton (Auth->Whitelist->Template->Routing->Execution->Response)",
-    "Implement OpenAI-compatible upstream adapter invocation in execution path",
-    "Add E2E tests for explicit concrete model bypass vs custom-model policy routing"
+    "Implement execution-service producer for execution.invocation.completed with complete metadata (event_id, event_version, trace_id, idempotency_key)",
+    "Implement billing-service Kafka consumer for execution.invocation.completed with idempotent usage persistence",
+    "Implement audit-service Kafka consumer for execution.invocation.completed with queryable invocation index persistence"
   ],
   "last_verified_commit": "UNCOMMITTED",
-  "updated_at": "2026-03-13T16:11:08Z"
+  "updated_at": "2026-03-14T08:23:10Z"
 }

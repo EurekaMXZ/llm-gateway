@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -58,6 +60,9 @@ func (s *Service) CreatePolicy(ctx context.Context, in CreatePolicyInput) (domai
 		return domain.Policy{}, domain.ErrInvalidInput
 	}
 	if in.Priority < 0 {
+		return domain.Policy{}, domain.ErrInvalidInput
+	}
+	if _, _, err := parseDifficultyCondition(in.ConditionJSON); err != nil {
 		return domain.Policy{}, domain.ErrInvalidInput
 	}
 	if err := authorizeWrite(in.ActorID, in.OwnerID, in.ActorIsSuperuser, in.ActorCanWrite); err != nil {
@@ -124,8 +129,10 @@ func (s *Service) SetPolicyStatus(ctx context.Context, in SetPolicyStatusInput) 
 }
 
 type ResolveInput struct {
-	OwnerID     string
-	CustomModel string
+	OwnerID         string
+	Model           string
+	CustomModel     string
+	DifficultyScore int
 }
 
 type ResolveResult struct {
@@ -137,12 +144,16 @@ type ResolveResult struct {
 func (s *Service) Resolve(ctx context.Context, in ResolveInput) (ResolveResult, error) {
 	ctx = ensureContext(ctx)
 	in.OwnerID = strings.TrimSpace(in.OwnerID)
+	in.Model = strings.TrimSpace(in.Model)
 	in.CustomModel = strings.TrimSpace(in.CustomModel)
-	if in.OwnerID == "" || in.CustomModel == "" {
+	if in.Model == "" {
+		in.Model = in.CustomModel
+	}
+	if in.OwnerID == "" || in.Model == "" {
 		return ResolveResult{}, domain.ErrInvalidInput
 	}
 
-	policies, err := s.repo.ListPolicies(ctx, in.OwnerID, in.CustomModel)
+	policies, err := s.repo.ListPolicies(ctx, in.OwnerID, in.Model)
 	if err != nil {
 		return ResolveResult{}, err
 	}
@@ -150,9 +161,79 @@ func (s *Service) Resolve(ctx context.Context, in ResolveInput) (ResolveResult, 
 		if policy.Status != domain.PolicyStatusEnabled {
 			continue
 		}
+		matched, err := matchesCondition(policy.ConditionJSON, in.DifficultyScore)
+		if err != nil {
+			// Backward compatibility:
+			// legacy rows may contain condition strings that are not parseable by
+			// current evaluator. Treat them as non-matching so resolve can continue.
+			continue
+		}
+		if !matched {
+			continue
+		}
 		return ResolveResult{Matched: true, Policy: policy, Reason: "ok"}, nil
 	}
 	return ResolveResult{Matched: false, Reason: "no_policy_matched"}, nil
+}
+
+type difficultyCondition struct {
+	Type string `json:"type"`
+	Min  *int   `json:"min"`
+	Max  *int   `json:"max"`
+}
+
+func matchesCondition(raw string, difficultyScore int) (bool, error) {
+	cond, hasCondition, err := parseDifficultyCondition(raw)
+	if err != nil {
+		return false, err
+	}
+	if !hasCondition {
+		return true, nil
+	}
+	min := 0
+	max := 100
+	if cond.Min != nil {
+		min = *cond.Min
+	}
+	if cond.Max != nil {
+		max = *cond.Max
+	}
+	return difficultyScore >= min && difficultyScore <= max, nil
+}
+
+func parseDifficultyCondition(raw string) (difficultyCondition, bool, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return difficultyCondition{}, false, nil
+	}
+
+	var cond difficultyCondition
+	if err := json.Unmarshal([]byte(raw), &cond); err != nil {
+		return difficultyCondition{}, false, fmt.Errorf("invalid condition json: %w", err)
+	}
+
+	if cond.Type == "" && cond.Min == nil && cond.Max == nil {
+		return difficultyCondition{}, false, nil
+	}
+	if cond.Type == "" {
+		cond.Type = "difficulty"
+	}
+	if cond.Type != "difficulty" {
+		return difficultyCondition{}, false, errors.New("unsupported condition type")
+	}
+
+	min := 0
+	max := 100
+	if cond.Min != nil {
+		min = *cond.Min
+	}
+	if cond.Max != nil {
+		max = *cond.Max
+	}
+	if min < 0 || min > 100 || max < 0 || max > 100 || min > max {
+		return difficultyCondition{}, false, errors.New("invalid difficulty range")
+	}
+	return cond, true, nil
 }
 
 func authorizeWrite(actorID string, ownerID string, actorIsSuperuser bool, actorCanWrite bool) error {

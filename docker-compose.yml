@@ -54,6 +54,12 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
 
+  mock-openai:
+    image: kennethreitz/httpbin
+    container_name: llm-gateway-mock-openai
+    ports:
+      - "${MOCK_OPENAI_HOST_PORT:-18088}:80"
+
   ingress-service:
     build:
       context: .
@@ -65,6 +71,18 @@ services:
       - postgres
       - redis
       - kafka
+      - identity-service
+      - apikey-service
+      - routing-service
+      - prompt-service
+      - execution-service
+      - mock-openai
+    environment:
+      IDENTITY_SERVICE_BASE_URL: http://identity-service:8080
+      APIKEY_SERVICE_BASE_URL: http://apikey-service:8080
+      ROUTING_SERVICE_BASE_URL: http://routing-service:8080
+      PROMPT_SERVICE_BASE_URL: http://prompt-service:8080
+      EXECUTION_SERVICE_BASE_URL: http://execution-service:8080
     ports:
       - "18080:8080"
 

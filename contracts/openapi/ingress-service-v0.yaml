@@ -1,0 +1,128 @@
+openapi: 3.1.0
+info:
+  title: ingress-service API
+  version: v0
+  description: M2/M3 ingress control-plane validation and OpenAI-compatible data-plane entry.
+servers:
+  - url: http://localhost:18080
+paths:
+  /v1/control/validate:
+    post:
+      summary: Validate bearer token + downstream API key + model whitelist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                model: { type: string }
+                api_key: { type: string }
+                authorization:
+                  type: string
+                  description: Optional bearer value fallback; header Authorization takes precedence.
+      responses:
+        '200':
+          description: Access allowed
+        '403':
+          description: Access denied (e.g., key invalid/disabled or owner mismatch)
+  /v1/chat/completions:
+    post:
+      summary: OpenAI-compatible chat completion entrypoint (M3 pipeline)
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema: { type: string }
+          description: Bearer control-plane token from identity-service.
+        - in: header
+          name: X-API-Key
+          required: true
+          schema: { type: string }
+          description: Downstream plaintext API key.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [model, messages]
+              properties:
+                model: { type: string }
+                messages:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: true
+                scene:
+                  type: string
+                  description: Optional scene template name for prompt rendering.
+                variables:
+                  type: object
+                  additionalProperties: true
+                  description: Optional template variables.
+      responses:
+        '200':
+          description: OpenAI-compatible chat completion response payload
+        '401':
+          description: Invalid bearer token
+        '403':
+          description: API key not allowed for caller/model
+        '422':
+          description: Prompt rendering failed with structured issues
+  /v1/responses:
+    post:
+      summary: OpenAI-compatible responses entrypoint (adapted via chat pipeline)
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema: { type: string }
+          description: Bearer control-plane token from identity-service.
+        - in: header
+          name: X-API-Key
+          required: true
+          schema: { type: string }
+          description: Downstream plaintext API key.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [model]
+              properties:
+                model: { type: string }
+                input:
+                  oneOf:
+                    - type: string
+                    - type: array
+                      items:
+                        type: object
+                        additionalProperties: true
+                messages:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: true
+                  description: Optional compatibility fallback when `input` is omitted.
+                instructions:
+                  type: string
+                  description: Converted to system message before user inputs.
+                scene:
+                  type: string
+                variables:
+                  type: object
+                  additionalProperties: true
+                stream:
+                  type: boolean
+                  description: Not supported in v0 (must be false or omitted).
+      responses:
+        '200':
+          description: OpenAI-compatible responses payload
+        '401':
+          description: Invalid bearer token
+        '403':
+          description: API key not allowed for caller/model
+        '422':
+          description: Prompt rendering failed with structured issues

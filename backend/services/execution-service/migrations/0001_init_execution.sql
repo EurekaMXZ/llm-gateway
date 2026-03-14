@@ -6,11 +6,14 @@ CREATE TABLE IF NOT EXISTS execution_providers (
     protocol    VARCHAR(32) NOT NULL,
     base_url    TEXT NOT NULL,
     api_key     TEXT NOT NULL,
+    priority    INTEGER NOT NULL DEFAULT 100,
     status      VARCHAR(32) NOT NULL,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (owner_id, name)
 );
+ALTER TABLE execution_providers
+    ADD COLUMN IF NOT EXISTS priority INTEGER NOT NULL DEFAULT 100;
 
 CREATE TABLE IF NOT EXISTS execution_models (
     id              VARCHAR(64) PRIMARY KEY,
@@ -26,6 +29,7 @@ CREATE TABLE IF NOT EXISTS execution_models (
 
 CREATE INDEX IF NOT EXISTS idx_execution_providers_owner ON execution_providers(owner_id);
 CREATE INDEX IF NOT EXISTS idx_execution_providers_status ON execution_providers(status);
+CREATE INDEX IF NOT EXISTS idx_execution_providers_priority ON execution_providers(priority);
 CREATE INDEX IF NOT EXISTS idx_execution_models_provider ON execution_models(provider_id);
 CREATE INDEX IF NOT EXISTS idx_execution_models_owner ON execution_models(owner_id);
 CREATE INDEX IF NOT EXISTS idx_execution_models_status ON execution_models(status);

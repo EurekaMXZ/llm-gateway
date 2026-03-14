@@ -2,13 +2,13 @@ openapi: 3.1.0
 info:
   title: routing-service API
   version: v0
-  description: M2 custom-model routing policy management API.
+  description: M2/M3 downstream-model routing policy management API.
 servers:
   - url: http://localhost:18084
 paths:
   /v1/policies:
     post:
-      summary: Create routing policy for a custom model
+      summary: Create routing policy for a downstream model
       requestBody:
         required: true
         content:
@@ -62,19 +62,25 @@ paths:
       summary: Disable policy
   /v1/policies/resolve:
     post:
-      summary: Resolve custom model to target provider/model decision
+      summary: Resolve downstream model to target provider/model decision
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [owner_id, custom_model]
+              required: [owner_id]
               properties:
                 owner_id: { type: string }
+                model:
+                  type: string
+                  description: Canonical downstream model name.
                 custom_model: { type: string }
+                difficulty_score:
+                  type: integer
+                  minimum: 0
+                  maximum: 100
+                  description: Optional deterministic score derived from request user-message complexity.
       responses:
         '200':
-          description: Matched policy
-        '404':
-          description: No policy matched
+          description: Resolution completed (matched or no match)

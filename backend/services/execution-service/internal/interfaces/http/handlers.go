@@ -27,12 +27,15 @@ func (h *Handler) RegisterRoutes(engine *gin.Engine) {
 		v1.GET("/providers/:id", h.getProvider)
 		v1.POST("/providers/:id/enable", h.enableProvider)
 		v1.POST("/providers/:id/disable", h.disableProvider)
+		v1.POST("/providers/:id/priority", h.setProviderPriority)
 
 		v1.POST("/models", h.createModel)
 		v1.GET("/models", h.listModels)
 		v1.GET("/models/:id", h.getModel)
 		v1.POST("/models/:id/enable", h.enableModel)
 		v1.POST("/models/:id/disable", h.disableModel)
+
+		v1.POST("/execute/chat/completions", h.executeChatCompletions)
 	}
 }
 
@@ -45,6 +48,7 @@ type createProviderRequest struct {
 	Protocol         string `json:"protocol"`
 	BaseURL          string `json:"base_url"`
 	APIKey           string `json:"api_key"`
+	Priority         *int   `json:"priority"`
 }
 
 func (h *Handler) createProvider(c *gin.Context) {
@@ -63,6 +67,7 @@ func (h *Handler) createProvider(c *gin.Context) {
 		Protocol:         req.Protocol,
 		BaseURL:          req.BaseURL,
 		APIKey:           req.APIKey,
+		Priority:         req.Priority,
 	})
 	if err != nil {
 		h.writeDomainError(c, err, "provider")
@@ -120,6 +125,34 @@ func (h *Handler) setProviderStatus(c *gin.Context, status domain.ProviderStatus
 		ActorCanWrite:    req.ActorCanWrite,
 		ProviderID:       c.Param("id"),
 		Status:           status,
+	})
+	if err != nil {
+		h.writeDomainError(c, err, "provider")
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"provider": providerResponse(provider)})
+}
+
+type setProviderPriorityRequest struct {
+	ActorID          string `json:"actor_id"`
+	ActorIsSuperuser bool   `json:"actor_is_superuser"`
+	ActorCanWrite    bool   `json:"actor_can_write"`
+	Priority         int    `json:"priority"`
+}
+
+func (h *Handler) setProviderPriority(c *gin.Context) {
+	var req setProviderPriorityRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		ginx.JSONError(c, http.StatusBadRequest, "execution.validation.invalid_payload", "invalid request payload", "validation")
+		return
+	}
+
+	provider, err := h.service.SetProviderPriority(c.Request.Context(), app.SetProviderPriorityInput{
+		ActorID:          req.ActorID,
+		ActorIsSuperuser: req.ActorIsSuperuser,
+		ActorCanWrite:    req.ActorCanWrite,
+		ProviderID:       c.Param("id"),
+		Priority:         req.Priority,
 	})
 	if err != nil {
 		h.writeDomainError(c, err, "provider")
@@ -218,6 +251,35 @@ func (h *Handler) setModelStatus(c *gin.Context, status domain.ModelStatus) {
 	c.JSON(http.StatusOK, gin.H{"model": modelResponse(model)})
 }
 
+type executeChatRequest struct {
+	OwnerID    string         `json:"owner_id"`
+	ProviderID string         `json:"provider_id"`
+	Payload    map[string]any `json:"payload"`
+}
+
+func (h *Handler) executeChatCompletions(c *gin.Context) {
+	var req executeChatRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		ginx.JSONError(c, http.StatusBadRequest, "execution.validation.invalid_payload", "invalid request payload", "validation")
+		return
+	}
+
+	result, err := h.service.ExecuteChat(c.Request.Context(), app.ExecuteChatInput{
+		OwnerID:    req.OwnerID,
+		ProviderID: req.ProviderID,
+		Payload:    req.Payload,
+	})
+	if err != nil {
+		h.writeDomainError(c, err, "execution")
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"provider_id":    result.ProviderID,
+		"upstream_model": result.UpstreamModel,
+		"response":       result.Response,
+	})
+}
+
 func (h *Handler) writeDomainError(c *gin.Context, err error, entity string) {
 	switch {
 	case app.IsDomainError(err, domain.ErrInvalidInput):
@@ -230,6 +292,8 @@ func (h *Handler) writeDomainError(c *gin.Context, err error, entity string) {
 		ginx.JSONError(c, http.StatusConflict, "execution.conflict."+entity, err.Error(), "conflict")
 	case app.IsDomainError(err, domain.ErrProviderDisabled):
 		ginx.JSONError(c, http.StatusBadRequest, "execution.validation.provider_disabled", err.Error(), "validation")
+	case app.IsDomainError(err, domain.ErrUpstreamFailed):
+		ginx.JSONError(c, http.StatusBadGateway, "execution.dependency.upstream_failed", err.Error(), "dependency")
 	default:
 		ginx.JSONError(c, http.StatusInternalServerError, "execution.internal.unexpected_error", "unexpected execution error", "internal")
 	}
@@ -242,6 +306,7 @@ func providerResponse(provider domain.Provider) gin.H {
 		"name":       provider.Name,
 		"protocol":   provider.Protocol,
 		"base_url":   provider.BaseURL,
+		"priority":   provider.Priority,
 		"status":     provider.Status,
 		"created_at": provider.CreatedAt.UTC().Format("2006-01-02T15:04:05Z"),
 		"updated_at": provider.UpdatedAt.UTC().Format("2006-01-02T15:04:05Z"),

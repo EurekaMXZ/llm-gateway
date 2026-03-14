@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"llm-gateway/backend/packages/platform/trace"
 )
 
 var (
@@ -105,6 +107,9 @@ func (s *Service) validateIdentity(ctx context.Context, bearerToken string) (Ide
 		return IdentityUser{}, err
 	}
 	req.Header.Set("Authorization", "Bearer "+bearerToken)
+	if traceID := strings.TrimSpace(trace.FromContext(ctx)); traceID != "" {
+		req.Header.Set(trace.HeaderTraceID, traceID)
+	}
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
@@ -146,6 +151,9 @@ func (s *Service) validateAPIKey(ctx context.Context, apiKey string, model strin
 		return APIKeyValidation{}, err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	if traceID := strings.TrimSpace(trace.FromContext(ctx)); traceID != "" {
+		req.Header.Set(trace.HeaderTraceID, traceID)
+	}
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {

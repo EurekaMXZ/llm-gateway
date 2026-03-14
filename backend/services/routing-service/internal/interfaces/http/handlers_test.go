@@ -68,6 +68,29 @@ func TestRoutingPolicyForbidden(t *testing.T) {
 	}
 }
 
+func TestRoutingResolveNoMatchStillReturns200(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	svc := routingapp.NewService()
+	engine := gin.New()
+	NewHandler(svc).RegisterRoutes(engine)
+
+	resp := doJSON(engine, http.MethodPost, "/v1/policies/resolve", map[string]any{
+		"owner_id":         "u-1",
+		"model":            "gpt-4.4-pro",
+		"difficulty_score": 50,
+	})
+	if resp.Code != http.StatusOK {
+		t.Fatalf("expected 200 got=%d body=%s", resp.Code, resp.Body.String())
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(resp.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("unmarshal payload: %v", err)
+	}
+	if matched, _ := payload["matched"].(bool); matched {
+		t.Fatalf("expected matched=false payload=%v", payload)
+	}
+}
+
 func doJSON(engine *gin.Engine, method string, path string, body any) *httptest.ResponseRecorder {
 	var reader *bytes.Reader
 	if body == nil {

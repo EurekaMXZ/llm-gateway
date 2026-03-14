@@ -10,4 +10,5 @@ var (
 	ErrProviderDisabled  = errors.New("provider is disabled")
 	ErrModelNotFound     = errors.New("model not found")
 	ErrModelNameTaken    = errors.New("model name already exists for provider")
+	ErrUpstreamFailed    = errors.New("upstream request failed")
 )

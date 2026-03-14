@@ -4,7 +4,7 @@
 - 2026-03-14
 
 ## Active Milestone
-- M3: Data plane main flow (M2 closeout completed on 2026-03-13)
+- M4: Event-driven audit and billing loop (M3 closeout completed on 2026-03-14)
 
 ## Completed
 - Rewrote `AGENTS.md` with executable architecture and process constraints.
@@ -41,14 +41,32 @@
 - Fixed review P2: apikey validation now rejects model-scoped keys when request model is empty (`reason=model_required`).
 - Fixed review P2: superuser uniqueness now enforced atomically through repository constraints (`uq_users_single_superuser`) plus in-memory lock-time guard.
 - Revalidated affected services and root Go test aggregation after fixes (`make test-go` PASS).
+- Updated governance docs: added mandatory `AGENTS.md` rule requiring synchronization among `AGENTS.md`, `docs/runbooks/*.md`, and `scripts/agent/*.sh`.
+- Implemented M3 ingress OpenAI data-plane endpoint `POST /v1/chat/completions` with full orchestration path: `Auth -> Whitelist -> Template -> Routing -> Execution -> Response`.
+- Added ingress data-plane service integration with `prompt-service`, `routing-service`, and `execution-service`, including no-policy direct execution fallback.
+- Added deterministic ingress difficulty scoring (user-message based) and passed score into routing resolve API.
+- Added execution-service M3 APIs: provider priority management and `POST /v1/execute/chat/completions`.
+- Updated routing resolve semantics to return `200 matched=false` on no-policy match and support model+difficulty inputs.
+- Added/updated unit tests for ingress dataplane, routing resolve semantics, and execution selection/validation paths.
+- Added/updated OpenAPI contracts for ingress/execution/routing M3 behavior.
+- Revalidated root backend tests after M3 implementation (`make test-go` PASS).
+- Added M3 compose-level smoke script (`scripts/agent/m3_closeout_smoke.sh`) and Makefile target (`make m3-smoke`).
+- Added `mock-openai` compose dependency (`kennethreitz/httpbin`) for deterministic upstream echo verification in local M3 E2E.
+- Implemented ingress `/v1/responses` compatibility endpoint via chat-pipeline adaptation.
+- Verified M3 closeout smoke end-to-end (`make m3-smoke` PASS), including policy-matched rewrite and no-policy direct execution paths.
+- Fixed review P1: `/v1/responses` now normalizes structured `input_text` parts to chat-compatible content parts before execution forwarding.
+- Fixed review P2: routing resolve now treats legacy invalid policy conditions as non-matching and continues evaluation (preserves fallback behavior).
+- Fixed review P2: Postgres execution target resolution now distinguishes disabled `provider_id` as `provider_disabled` instead of `model_not_found`.
+- Fixed review P2: denied data-plane calls (`/v1/chat/completions`, `/v1/responses`) now return standard error envelope instead of raw decision payload.
+- Revalidated full backend test suite after fixes (`make test-go` PASS).
 
 ## In Progress
-- M3 planning and ingress main data-plane orchestration bootstrap.
+- M4 bootstrap planning and event contract implementation preparation.
 
 ## Blockers
 - None
 
 ## Next Actions
-1. Build M3 ingress orchestration pipeline skeleton (`Auth -> Whitelist -> Template -> Routing -> Execution -> Response`).
-2. Define/implement upstream execution adapter invocation path for OpenAI-compatible flows.
-3. Add end-to-end test path for explicit concrete model bypass vs custom-model policy routing behavior.
+1. Implement execution completion event producer in `execution-service` (`execution.invocation.completed`), including trace/idempotency metadata.
+2. Implement `billing-service` consumer and idempotent usage persistence for `execution.invocation.completed`.
+3. Implement `audit-service` consumer and invocation index persistence for `execution.invocation.completed`.

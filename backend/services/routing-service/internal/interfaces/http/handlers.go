@@ -124,8 +124,10 @@ func (h *Handler) setPolicyStatus(c *gin.Context, status domain.PolicyStatus) {
 }
 
 type resolveRequest struct {
-	OwnerID     string `json:"owner_id"`
-	CustomModel string `json:"custom_model"`
+	OwnerID         string `json:"owner_id"`
+	Model           string `json:"model"`
+	CustomModel     string `json:"custom_model"`
+	DifficultyScore int    `json:"difficulty_score"`
 }
 
 func (h *Handler) resolve(c *gin.Context) {
@@ -136,22 +138,20 @@ func (h *Handler) resolve(c *gin.Context) {
 	}
 
 	result, err := h.service.Resolve(c.Request.Context(), app.ResolveInput{
-		OwnerID:     req.OwnerID,
-		CustomModel: req.CustomModel,
+		OwnerID:         req.OwnerID,
+		Model:           req.Model,
+		CustomModel:     req.CustomModel,
+		DifficultyScore: req.DifficultyScore,
 	})
 	if err != nil {
 		h.writeDomainError(c, err)
 		return
 	}
-	status := http.StatusOK
-	if !result.Matched {
-		status = http.StatusNotFound
-	}
 	if result.Matched {
-		c.JSON(status, gin.H{"matched": true, "reason": result.Reason, "policy": policyResponse(result.Policy)})
+		c.JSON(http.StatusOK, gin.H{"matched": true, "reason": result.Reason, "policy": policyResponse(result.Policy)})
 		return
 	}
-	c.JSON(status, gin.H{"matched": false, "reason": result.Reason})
+	c.JSON(http.StatusOK, gin.H{"matched": false, "reason": result.Reason})
 }
 
 func (h *Handler) writeDomainError(c *gin.Context, err error) {

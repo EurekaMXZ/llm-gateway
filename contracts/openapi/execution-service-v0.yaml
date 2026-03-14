@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: execution-service API
   version: v0
-  description: M2 provider and model catalog management API.
+  description: M2/M3 provider-model catalog and upstream execution API.
 servers:
   - url: http://localhost:18083
 paths:
@@ -27,6 +27,10 @@ paths:
                   enum: [openai-compatible]
                 base_url: { type: string }
                 api_key: { type: string }
+                priority:
+                  type: integer
+                  minimum: 0
+                  description: Lower value means higher provider selection priority.
       responses:
         '201':
           description: Provider created
@@ -58,6 +62,29 @@ paths:
   /v1/providers/{id}/disable:
     post:
       summary: Disable provider
+  /v1/providers/{id}/priority:
+    post:
+      summary: Update provider priority
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [actor_id, priority]
+              properties:
+                actor_id: { type: string }
+                actor_is_superuser: { type: boolean }
+                actor_can_write: { type: boolean, description: "Set true when caller is authorized to manage owner subtree resources." }
+                priority: { type: integer, minimum: 0 }
+      responses:
+        '200':
+          description: Provider priority updated
   /v1/models:
     post:
       summary: Create model catalog entry under provider
@@ -110,3 +137,24 @@ paths:
   /v1/models/{id}/disable:
     post:
       summary: Disable model
+  /v1/execute/chat/completions:
+    post:
+      summary: Execute OpenAI-compatible chat completion upstream call
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [owner_id, payload]
+              properties:
+                owner_id: { type: string }
+                provider_id:
+                  type: string
+                  description: Optional fixed provider target; empty means choose by owner/model/priority.
+                payload:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Upstream execution completed

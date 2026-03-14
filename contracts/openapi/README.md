@@ -6,6 +6,7 @@ This directory stores versioned synchronous API contracts.
 - Internal control-plane API contracts per service.
 
 Current service contracts:
+- `ingress-service-v0.yaml`
 - `identity-service-v0.yaml`
 - `apikey-service-v0.yaml`
 - `execution-service-v0.yaml`
