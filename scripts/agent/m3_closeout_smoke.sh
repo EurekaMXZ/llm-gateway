@@ -143,7 +143,9 @@ fi
 TS="$(date +%s)"
 MATCH_MODEL="m3_alias_${TS}"
 ROUTE_TARGET_MODEL="m3_route_target_${TS}"
-DIRECT_MODEL="gpt-4o-mini"
+# Keep direct model unique per run to avoid matching stale provider/model rows
+# from previous smoke runs when execution target selection orders by priority+created_at.
+DIRECT_MODEL="m3_direct_${TS}"
 MATCH_UPSTREAM_MODEL="m3-upstream-route-${TS}"
 DIRECT_UPSTREAM_MODEL="m3-upstream-direct-${TS}"
 SCENE_NAME="m3_scene_${TS}"

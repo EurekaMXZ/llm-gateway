@@ -59,6 +59,8 @@
 - Fixed review P2: Postgres execution target resolution now distinguishes disabled `provider_id` as `provider_disabled` instead of `model_not_found`.
 - Fixed review P2: denied data-plane calls (`/v1/chat/completions`, `/v1/responses`) now return standard error envelope instead of raw decision payload.
 - Revalidated full backend test suite after fixes (`make test-go` PASS).
+- Fixed flaky `make m3-smoke` direct-path assertion by making direct-model name unique per run to avoid stale historical model selection collisions.
+- Revalidated compose-level M3 smoke after fix (`make m3-smoke` PASS).
 
 ## In Progress
 - M4 bootstrap planning and event contract implementation preparation.
